@@ -1,0 +1,43 @@
+project_name: "bank_churn_decision_support"
+random_state: 42
+n_customers: 10000
+prediction_horizon_months: 6
+observation_window_months: 12
+raw_data_dir: "data/raw"
+interim_data_dir: "data/interim"
+processed_data_dir: "data/processed"
+report_dir: "reports/results"
+figure_dir: "reports/figures"
+synthetic_dataset_label: "Synthetic banking relationship data generated for academic experimentation"
+allowed_target_horizon_months: [6, 12]
+feature_columns:
+  - age_band
+  - customer_tenure
+  - customer_segment
+  - number_of_active_products
+  - primary_account_type
+  - relationship_status
+  - average_account_balance
+  - balance_trend
+  - income_salary_inflow_regularity
+  - loan_repayment_status
+  - credit_utilization
+  - recent_overdraft_occurrences
+  - transaction_count
+  - average_transaction_value
+  - transaction_value_trend
+  - inflow_to_outflow_ratio
+  - recurring_payment_activity
+  - failed_declined_transaction_rate
+  - days_since_last_meaningful_interaction
+  - digital_banking_activity_level
+  - change_in_digital_activity
+  - number_of_active_banking_channels
+  - branch_service_interaction_frequency
+  - unusual_reduction_in_account_usage
+  - complaint_occurrence
+  - complaint_resolution_time
+  - first_contact_resolution
+  - service_interaction_frequency
+  - failed_service_transaction_incidents
+  - service_channel_wait_time
