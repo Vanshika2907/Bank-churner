@@ -152,7 +152,8 @@ def generate_monthly_history(profile_df: pd.DataFrame, months: int, rng: np.rand
 
             digital_activity = max(3, np.clip(48 + 10 * age_factor + 12 * segment_factor + 8 * products + rng.normal(0, 12), 3, 180))
             digital_change = rng.normal(-0.08 + 0.04 * (1 - salary_regular), 0.18)
-            active_channels = int(np.clip(1 + int(np.round(products / 2)) + rng.integers(0, 3), 1, 6))# KNOWN BUG: result is clipped to 0 for every row (see README, Known limitations)
+            active_channels = int(np.clip(1 + int(np.round(products / 2)) + rng.integers(0, 3), 1, 6))
+            # KNOWN ISSUE: constant 0 in all rows; suspected cause is the 0.4 * digital_activity term (unconfirmed). See README.
             branch_interactions = max(0, int(np.clip(3 + rng.normal(0, 2.5) - 0.4 * digital_activity, 0, 12)))
             usage_reduction = float(np.clip(0.03 + max(0, -digital_change) * 0.9 + rng.normal(0, 0.12), 0.0, 0.9))
 
