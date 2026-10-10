@@ -1005,4 +1005,15 @@ That's what gives us a meaningful ML problem.
 ---
 
 ### Our development path is now locked
+## Known limitations
+
+- **`branch_service_interaction_frequency` is constant (0) in the dataset.**
+  Verified: all 120,000 rows in `data/raw/monthly_engagement.csv` are 0, and
+  `ml_ready_dataset.csv` has 1 unique value for this column. The model therefore
+  cannot learn from it, so it effectively uses 29 of 30 features.
+  Suspected cause: the formula in `generate_synthetic_dataset.py` (line 156) goes
+  far below 0 and is clipped to 0. Not yet confirmed or fixed.
+- `service_interaction_frequency` is derived from this feature (line 162), so it
+  is probably affected too.
+- The data quality report did not flag zero-variance columns.
 

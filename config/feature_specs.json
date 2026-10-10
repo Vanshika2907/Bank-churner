@@ -1,0 +1,221 @@
+{
+  "age_band": {
+    "type": "categorical",
+    "options": [
+      "18-25",
+      "26-35",
+      "36-45",
+      "46-55",
+      "56-65",
+      "65+"
+    ]
+  },
+  "customer_tenure": {
+    "type": "float",
+    "min": 0.5,
+    "max": 30.0,
+    "default": 8.5,
+    "step": 0.1
+  },
+  "customer_segment": {
+    "type": "categorical",
+    "options": [
+      "Mass",
+      "Mass Affluent",
+      "Premium",
+      "SME",
+      "Wealth"
+    ]
+  },
+  "number_of_active_products": {
+    "type": "int",
+    "min": 1,
+    "max": 8,
+    "default": 4,
+    "step": 1
+  },
+  "primary_account_type": {
+    "type": "categorical",
+    "options": [
+      "Business",
+      "Current",
+      "Private",
+      "Savings"
+    ]
+  },
+  "relationship_status": {
+    "type": "categorical",
+    "options": [
+      "Primary",
+      "Secondary"
+    ]
+  },
+  "average_account_balance": {
+    "type": "float",
+    "min": 17692.060833333333,
+    "max": 414113.25,
+    "default": 125206.9,
+    "step": 1000.0
+  },
+  "balance_trend": {
+    "type": "float",
+    "min": -0.1752333333333333,
+    "max": 0.1942333333333333,
+    "default": 0.01536666666666665,
+    "step": 0.001
+  },
+  "income_salary_inflow_regularity": {
+    "type": "float",
+    "min": 0.8696916666666666,
+    "max": 1.0,
+    "default": 0.95615,
+    "step": 0.001
+  },
+  "loan_repayment_status": {
+    "type": "float",
+    "min": -0.0693,
+    "max": 0.2574333333333333,
+    "default": 0.10117916666666665,
+    "step": 0.001
+  },
+  "credit_utilization": {
+    "type": "float",
+    "min": 0.2469916666666666,
+    "max": 0.4408749999999999,
+    "default": 0.3442958333333333,
+    "step": 0.001
+  },
+  "recent_overdraft_occurrences": {
+    "type": "int",
+    "min": 0,
+    "max": 4,
+    "default": 0,
+    "step": 1
+  },
+  "transaction_count": {
+    "type": "float",
+    "min": 56.083333333333336,
+    "max": 180.0,
+    "default": 113.58333333333331,
+    "step": 1.0
+  },
+  "average_transaction_value": {
+    "type": "float",
+    "min": 164.52333333333334,
+    "max": 458.51416666666665,
+    "default": 289.11583333333334,
+    "step": 1.0
+  },
+  "transaction_value_trend": {
+    "type": "float",
+    "min": -0.1121249999999999,
+    "max": 0.1554916666666666,
+    "default": 0.022737499999999952,
+    "step": 0.001
+  },
+  "inflow_to_outflow_ratio": {
+    "type": "float",
+    "min": 1.0912,
+    "max": 1.3566833333333337,
+    "default": 1.2249958333333333,
+    "step": 0.001
+  },
+  "recurring_payment_activity": {
+    "type": "float",
+    "min": 0.1777416666666666,
+    "max": 0.5849416666666667,
+    "default": 0.3842833333333333,
+    "step": 0.001
+  },
+  "failed_declined_transaction_rate": {
+    "type": "float",
+    "min": 0.0087833333333333,
+    "max": 0.073725,
+    "default": 0.0364416666666666,
+    "step": 0.0001
+  },
+  "days_since_last_meaningful_interaction": {
+    "type": "float",
+    "min": 7.083333333333333,
+    "max": 20.416666666666668,
+    "default": 13.833333333333334,
+    "step": 0.1
+  },
+  "digital_banking_activity_level": {
+    "type": "float",
+    "min": 66.81583333333333,
+    "max": 145.64916666666667,
+    "default": 99.90749999999998,
+    "step": 0.1
+  },
+  "change_in_digital_activity": {
+    "type": "float",
+    "min": -0.2613083333333333,
+    "max": 0.1356833333333333,
+    "default": -0.0781916666666666,
+    "step": 0.001
+  },
+  "number_of_active_banking_channels": {
+    "type": "float",
+    "min": 1.25,
+    "max": 6.0,
+    "default": 4.0,
+    "step": 0.01
+  },
+  "branch_service_interaction_frequency": {
+    "type": "int",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "step": 1
+  },
+  "unusual_reduction_in_account_usage": {
+    "type": "float",
+    "min": 0.0216416666666666,
+    "max": 0.3481666666666667,
+    "default": 0.1503083333333333,
+    "step": 0.001
+  },
+  "complaint_occurrence": {
+    "type": "int",
+    "min": 0,
+    "max": 9,
+    "default": 3,
+    "step": 1
+  },
+  "complaint_resolution_time": {
+    "type": "float",
+    "min": 0.6425,
+    "max": 8.973333333333334,
+    "default": 4.349166666666666,
+    "step": 0.01
+  },
+  "first_contact_resolution": {
+    "type": "float",
+    "min": 0.7488833333333332,
+    "max": 0.9603416666666668,
+    "default": 0.8659,
+    "step": 0.001
+  },
+  "service_interaction_frequency": {
+    "type": "float",
+    "min": 0.3333333333333333,
+    "max": 4.666666666666667,
+    "default": 2.25,
+    "step": 0.01
+  },
+  "failed_service_transaction_incidents": {
+    "type": "int",
+    "min": 0,
+    "max": 6,
+    "default": 1,
+    "step": 1
+  },
+  "service_channel_wait_time": {
+    "type": "float",
+    "min": 0.8833333333333333,
+    "max": 7.449166666666667,
+    "default": 3.5833333333333335,
+    "step": 0.01
+  }
+}
