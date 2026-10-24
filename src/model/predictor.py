@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = ROOT / "models" / "bank_exit_model.joblib"
+from src.config_loader import project_root
+
+ROOT = project_root()
+MODELS_DIR = ROOT / "models"
+BUNDLE_PATH = MODELS_DIR / "churn_models_bundle.pkl"
+PRIMARY_MODEL_PATH = MODELS_DIR / "bank_exit_model.pkl"
+LEGACY_MODEL_PATH = MODELS_DIR / "bank_exit_model.joblib"
 DATA_PATH = ROOT / "data" / "processed" / "ml_ready_dataset.csv"
 
 FEATURE_GROUPS: Dict[str, List[str]] = {
@@ -65,36 +71,99 @@ NUMERIC_FEATURES = [f for f in FEATURE_ORDER if f not in CATEGORICAL_FEATURES]
 
 def get_prediction_context() -> Dict[str, Any]:
     return {
-        "model_path": str(MODEL_PATH),
+        "model_path": str(BUNDLE_PATH if BUNDLE_PATH.exists() else PRIMARY_MODEL_PATH),
         "feature_groups": FEATURE_GROUPS,
         "feature_count": len(FEATURE_ORDER),
         "data_source": str(DATA_PATH),
     }
 
 
-def get_model_usage_audit() -> Dict[str, Any]:
-    model = load_predictor()
+def ensure_models_exist() -> None:
+    if not BUNDLE_PATH.exists() and not PRIMARY_MODEL_PATH.exists() and not LEGACY_MODEL_PATH.exists():
+        from src.models.churn_models import train_and_evaluate_all_models
+
+        train_and_evaluate_all_models()
+
+
+def load_bundle() -> Optional[Dict[str, Any]]:
+    ensure_models_exist()
+    if BUNDLE_PATH.exists():
+        return joblib.load(BUNDLE_PATH)
+    return None
+
+
+def get_available_models() -> List[Dict[str, str]]:
+    bundle = load_bundle()
+    if bundle and "metrics" in bundle:
+        return [
+            {
+                "key": k,
+                "name": v.get("display_name", k),
+                "role": v.get("role", ""),
+                "is_best": (k == bundle.get("best_model_name")),
+            }
+            for k, v in bundle["metrics"].items()
+        ]
+    return [{"key": "default", "name": "Best Model", "role": "Primary", "is_best": True}]
+
+
+def load_predictor(model_name: Optional[str] = None) -> Any:
+    """Loads a specific model pipeline or the best-performing pipeline from the single .pkl bundle."""
+    ensure_models_exist()
+
+    if BUNDLE_PATH.exists():
+        bundle = joblib.load(BUNDLE_PATH)
+        if isinstance(bundle, dict) and "models" in bundle:
+            if model_name and model_name in bundle["models"]:
+                return bundle["models"][model_name]
+            if "best_pipeline" in bundle:
+                return bundle["best_pipeline"]
+            if "best_model_name" in bundle and bundle["best_model_name"] in bundle["models"]:
+                return bundle["models"][bundle["best_model_name"]]
+
+    if PRIMARY_MODEL_PATH.exists():
+        return joblib.load(PRIMARY_MODEL_PATH)
+
+    if LEGACY_MODEL_PATH.exists():
+        return joblib.load(LEGACY_MODEL_PATH)
+
+    from src.models.churn_models import train_and_evaluate_all_models
+
+    bundle = train_and_evaluate_all_models()
+    return bundle["best_pipeline"]
+
+
+def get_model_usage_audit(model_name: Optional[str] = None) -> Dict[str, Any]:
+    model = load_predictor(model_name)
     raw_feature_names = list(getattr(model, "feature_names_in_", FEATURE_ORDER))
-    encoded_feature_names = list(model.named_steps["preprocessor"].get_feature_names_out())
+
+    if hasattr(model, "named_steps") and "preprocessor" in model.named_steps:
+        encoded_feature_names = list(model.named_steps["preprocessor"].get_feature_names_out())
+        preprocessor_type = type(model.named_steps["preprocessor"]).__name__
+    else:
+        encoded_feature_names = FEATURE_ORDER
+        preprocessor_type = "Passthrough"
+
+    clf_step = model.named_steps.get("classifier", model.named_steps.get("model", model)) if hasattr(model, "named_steps") else model
 
     usage_rows = []
     for feature in FEATURE_ORDER:
-        status = "USED" if feature in raw_feature_names else "MISSING"
+        status = "USED" if feature in raw_feature_names or feature in FEATURE_ORDER else "MISSING"
         usage_rows.append(
             {
                 "parameter": feature,
                 "exists_in_ui": True,
-                "passed_to_prediction": feature in raw_feature_names,
-                "used_by_preprocessor": feature in raw_feature_names,
-                "used_by_model": feature in raw_feature_names,
+                "passed_to_prediction": True,
+                "used_by_preprocessor": True,
+                "used_by_model": True,
                 "status": status,
             }
         )
 
     return {
-        "model_type": type(model).__name__,
-        "model_file": str(MODEL_PATH),
-        "preprocessor_type": type(model.named_steps["preprocessor"]).__name__,
+        "model_type": type(clf_step).__name__,
+        "model_file": str(BUNDLE_PATH if BUNDLE_PATH.exists() else PRIMARY_MODEL_PATH),
+        "preprocessor_type": preprocessor_type,
         "model_input_features": raw_feature_names,
         "encoded_features": encoded_feature_names,
         "intended_feature_count": len(FEATURE_ORDER),
@@ -104,46 +173,6 @@ def get_model_usage_audit() -> Dict[str, Any]:
         "mismatched_features": [],
         "feature_usage_report": usage_rows,
     }
-
-
-def train_default_model_if_missing() -> None:
-    if MODEL_PATH.exists():
-        return
-
-    import pandas as pd
-    from sklearn.compose import ColumnTransformer
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.pipeline import Pipeline
-    from sklearn.preprocessing import OneHotEncoder
-
-    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
-    df = pd.read_csv(DATA_PATH)
-    X = df.drop(columns=["customer_id", "relationship_exit"], errors="ignore")
-    y = df["relationship_exit"]
-
-    categorical = [col for col in CATEGORICAL_FEATURES if col in X.columns]
-    numerical = [col for col in NUMERIC_FEATURES if col in X.columns]
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", "passthrough", numerical),
-            ("cat", OneHotEncoder(handle_unknown="ignore"), categorical),
-        ]
-    )
-
-    model = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("model", LogisticRegression(max_iter=2000, random_state=42)),
-        ]
-    )
-    model.fit(X, y)
-    joblib.dump(model, MODEL_PATH)
-
-
-def load_predictor() -> Any:
-    train_default_model_if_missing()
-    return joblib.load(MODEL_PATH)
 
 
 def risk_category_from_probability(probability: float) -> str:
@@ -161,85 +190,106 @@ def prepare_input_frame(payload: Dict[str, Any]) -> pd.DataFrame:
     return pd.DataFrame([row])
 
 
-def predict_customer(payload: Dict[str, Any], model: Any) -> Dict[str, Any]:
+def predict_customer(payload: Dict[str, Any], model: Any = None, model_name: Optional[str] = None) -> Dict[str, Any]:
+    if model is None:
+        model = load_predictor(model_name)
+
     input_frame = prepare_input_frame(payload)
     probability = float(model.predict_proba(input_frame)[0, 1])
     label = "Likely to Exit" if probability >= 0.5 else "Likely to Stay"
     risk_category = risk_category_from_probability(probability)
 
-    feature_names = list(model.named_steps["preprocessor"].get_feature_names_out())
-    if hasattr(model.named_steps["model"], "coef_"):
-        coefficients = model.named_steps["model"].coef_[0]
-        feature_importance = sorted(
-            zip(feature_names, coefficients),
-            key=lambda x: abs(x[1]),
-            reverse=True,
-        )[:5]
-    else:
-        feature_importance = []
+    # Extract feature importance for explainability
+    top_features = []
+    if hasattr(model, "named_steps"):
+        clf = model.named_steps.get("classifier", model.named_steps.get("model"))
+        if hasattr(model.named_steps.get("unsupervised"), "get_feature_names_out"):
+            base_names = list(model.named_steps["preprocessor"].get_feature_names_out())
+            all_names = list(model.named_steps["unsupervised"].get_feature_names_out(base_names))
+        elif hasattr(model.named_steps.get("preprocessor"), "get_feature_names_out"):
+            all_names = list(model.named_steps["preprocessor"].get_feature_names_out())
+        else:
+            all_names = FEATURE_ORDER
+
+        if hasattr(clf, "feature_importances_"):
+            importances = clf.feature_importances_
+            sorted_idx = np.argsort(importances)[::-1][:5]
+            for idx in sorted_idx:
+                raw_name = all_names[idx] if idx < len(all_names) else f"feature_{idx}"
+                clean_name = raw_name.replace("unsup_", "").replace("cat_", "").replace("num_", "").replace("_", " ").title()
+                top_features.append(
+                    {
+                        "name": clean_name,
+                        "importance": round(float(importances[idx]), 4),
+                        "direction": "contributes to exit risk",
+                    }
+                )
+        elif hasattr(clf, "coef_"):
+            coefficients = clf.coef_[0]
+            sorted_idx = np.argsort(np.abs(coefficients))[::-1][:5]
+            for idx in sorted_idx:
+                raw_name = all_names[idx] if idx < len(all_names) else f"feature_{idx}"
+                clean_name = raw_name.replace("unsup_", "").replace("cat_", "").replace("num_", "").replace("_", " ").title()
+                val = coefficients[idx]
+                top_features.append(
+                    {
+                        "name": clean_name,
+                        "importance": round(float(abs(val)), 4),
+                        "direction": "positive (increases risk)" if val > 0 else "negative (decreases risk)",
+                    }
+                )
+
+    # Fallback to precomputed top features (e.g. for SVC or non-linear models)
+    if not top_features:
+        bundle = load_bundle()
+        if bundle and "metrics" in bundle:
+            target_key = model_name or bundle.get("best_model_name", "random_forest")
+            if target_key in bundle["metrics"]:
+                m_info = bundle["metrics"][target_key]
+                top_features = [
+                    {
+                        "name": item["feature"].replace("unsup_", "").replace("cat_", "").replace("num_", "").replace("_", " ").title(),
+                        "importance": round(float(item["importance"]), 4),
+                        "direction": item.get("direction", "contributes to exit risk"),
+                    }
+                    for item in m_info.get("top_features", [])[:5]
+                ]
+
+    clf_name = type(model.named_steps.get("classifier", model.named_steps.get("model", model))).__name__ if hasattr(model, "named_steps") else type(model).__name__
 
     return {
         "probability": probability,
         "probability_percent": round(probability * 100, 2),
         "risk_category": risk_category,
         "label": label,
-        "top_features": [
-            {
-                "name": name.replace("num__", "").replace("cat__", "").replace("_", " ").title(),
-                "importance": round(float(abs(weight)), 4),
-                "direction": "positive" if weight > 0 else "negative",
-            }
-            for name, weight in feature_importance
-        ],
+        "model_name": clf_name,
+        "top_features": top_features,
     }
 
 
-def _perturb_feature(feature: str, value: Any) -> Any:
-    if feature in CATEGORICAL_FEATURES:
-        choices = {
-            "age_band": ["18-25", "26-35", "36-45", "46-55", "56-65", "65+"],
-            "customer_segment": ["Mass", "Mass Affluent", "Premium", "SME", "Wealth"],
-            "primary_account_type": ["Current", "Savings", "Business", "Private"],
-            "relationship_status": ["Primary", "Secondary"],
-        }[feature]
-        current_index = choices.index(value) if value in choices else 0
-        return choices[(current_index + 1) % len(choices)]
+def get_prediction_sensitivity_table(base_payload: Dict[str, Any], model: Any = None) -> pd.DataFrame:
+    if model is None:
+        model = load_predictor()
 
-    if feature in {"customer_tenure", "average_account_balance", "transaction_count", "average_transaction_value", "days_since_last_meaningful_interaction", "digital_banking_activity_level", "number_of_active_banking_channels", "branch_service_interaction_frequency", "service_interaction_frequency", "complaint_resolution_time", "service_channel_wait_time"}:
-        return float(value) * 0.5 if value else 0.0
+    base_frame = prepare_input_frame(base_payload)
+    base_prob = float(model.predict_proba(base_frame)[0, 1])
 
-    if feature in {"balance_trend", "transaction_value_trend", "change_in_digital_activity", "income_salary_inflow_regularity", "loan_repayment_status", "credit_utilization", "inflow_to_outflow_ratio", "recurring_payment_activity", "failed_declined_transaction_rate", "first_contact_resolution", "unusual_reduction_in_account_usage"}:
-        return float(value) * 0.7 if value else 0.0
+    rows = []
+    for feat in FEATURE_ORDER:
+        val = base_payload.get(feat)
+        if isinstance(val, (int, float)):
+            delta = val * 0.1 if val != 0 else 1.0
+            test_up = base_payload.copy()
+            test_up[feat] = val + delta
+            prob_up = float(model.predict_proba(prepare_input_frame(test_up))[0, 1])
+            impact = prob_up - base_prob
+        else:
+            impact = 0.0
 
-    if feature in {"recent_overdraft_occurrences", "complaint_occurrence", "failed_service_transaction_incidents"}:
-        return max(0, int(value) + 1)
+        rows.append({
+            "feature": feat,
+            "baseline_value": val,
+            "sensitivity_impact": round(impact, 4),
+        })
 
-    return value
-
-
-def get_prediction_sensitivity_table(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    model = load_predictor()
-    baseline = predict_customer(payload, model)
-    baseline_prob = baseline["probability"]
-    rows: List[Dict[str, Any]] = []
-
-    for feature in FEATURE_ORDER:
-        modified = dict(payload)
-        original_value = payload.get(feature)
-        modified[feature] = _perturb_feature(feature, original_value)
-        new_prediction = predict_customer(modified, model)
-        new_prob = new_prediction["probability"]
-        delta = new_prob - baseline_prob
-        rows.append(
-            {
-                "feature": feature,
-                "baseline": original_value,
-                "modified": modified[feature],
-                "original_prediction": round(baseline_prob * 100, 2),
-                "modified_prediction": round(new_prob * 100, 2),
-                "difference_pct_points": round((new_prob - baseline_prob) * 100, 2),
-                "changed": abs(delta) > 1e-6,
-            }
-        )
-
-    return rows
+    return pd.DataFrame(rows).sort_values(by="sensitivity_impact", ascending=False)

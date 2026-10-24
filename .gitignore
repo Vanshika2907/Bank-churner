@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 .venv/
+venv/
 .env
 .ipynb_checkpoints/
 .DS_Store
@@ -8,4 +9,6 @@ __pycache__/
 reports/results/*.csv
 reports/results/*.json
 models/*.joblib
+models/*.pkl
 app_old.py
+setup_env.py
