@@ -1,16 +1,4 @@
-
-# 2. `README.md` — PROJECT GUARDRAIL
-
-I recommend putting this in the root of your repository as `README.md`.
-
-````markdown
 # Machine Learning-Based Bank Customer Relationship Exit Prediction
-
-## University Project
-
-A machine-learning-based decision support system designed to identify banking customers who are at increased risk of exiting their relationship with a bank.
-
----
 
 # 1. Project Overview
 
@@ -24,7 +12,6 @@ The project will initially focus on:
 
 and will progressively evolve into:
 
-```text
 Relationship Exit Prediction
           ↓
 Exit Probability
@@ -36,7 +23,6 @@ Customer Prioritization
 Decision Support
           ↓
 Prescriptive Recommendations
-````
 
 ---
 
@@ -70,17 +56,14 @@ Predict whether a customer is likely to exit their banking relationship within t
 
 Initial prediction horizon:
 
-```text
 6 months
-```
+
 
 The architecture must support:
 
-```text
 6 months
 ↓
 12 months
-```
 
 without requiring a complete redesign.
 
@@ -88,7 +71,7 @@ without requiring a complete redesign.
 
 # 4. Target Variable
 
-## `relationship_exit`
+## relationship_exit
 
 Binary target:
 
@@ -163,9 +146,7 @@ The objective is to create a realistic ML experimentation environment, not to im
 
 Development dataset:
 
-```text
 10,000 customers
-```
 
 This dataset is used for:
 
@@ -177,10 +158,9 @@ This dataset is used for:
 
 After validation, the dataset may be scaled to:
 
-```text
 50,000+
 100,000+
-```
+
 
 The larger dataset should only be generated after the methodology works correctly on the smaller dataset.
 
@@ -190,7 +170,7 @@ The larger dataset should only be generated after the methodology works correctl
 
 The project follows a temporal prediction structure.
 
-```text
+
                  OBSERVATION WINDOW
               Historical information
                        │
@@ -208,7 +188,7 @@ The project follows a temporal prediction structure.
                        │
                        ▼
               Relationship Exit
-```
+
 
 The model may only use information available before or at the prediction date.
 
@@ -222,23 +202,23 @@ No future information may be used as a predictor.
 
 ### Allowed
 
-```text
+
 Previous balance trend
 Previous transaction decline
 Previous complaints
 Previous service interactions
 Previous digital activity
-```
+
 
 ### Not allowed
 
-```text
+
 Future account closure
 Future transaction activity
 Future balance
 Future complaints
 Future service interactions
-```
+
 
 The target is the only variable allowed to depend on the future outcome window.
 
@@ -250,7 +230,7 @@ Every feature should have a clearly defined temporal meaning.
 
 The project contains 30 core parameters.
 
-## A. Customer & Relationship Context
+## A. Customer & Relationship Con
 
 1. Age Band
 2. Customer Tenure
@@ -311,7 +291,7 @@ Where possible, raw data should contain historical monthly information.
 
 Conceptually:
 
-```text
+
 Customer
    │
    ├── Profile
@@ -332,7 +312,7 @@ Customer
             │
             ▼
        Outcome Window
-```
+
 
 This allows features such as:
 
@@ -379,16 +359,16 @@ Every engineered feature must have:
 
 The target must NOT be generated using a simple deterministic rule such as:
 
-```python
+python
 if complaints > X:
     churn = 1
-```
+
 
 Instead, synthetic customer behavior should contribute to an underlying latent relationship-health or exit-propensity process.
 
 Conceptually:
 
-```text
+
 Customer Characteristics
           +
 Financial Behavior
@@ -404,7 +384,7 @@ Latent Relationship Health
 Exit Propensity
           ↓
 Probabilistic Relationship Exit
-```
+
 
 The latent variable itself must NOT be included as a model feature.
 
@@ -503,13 +483,10 @@ Where appropriate, temporal validation should be preferred.
 
 The final model should provide more than:
 
-```text
 Customer A → 82% risk
-```
 
 It should ideally provide:
 
-```text
 Customer A
 Exit Probability: 82%
 
@@ -519,7 +496,7 @@ Major contributing factors:
 - negative balance trend
 - increased service interactions
 - repeated failed transactions
-```
+
 
 Interpretability is an important component of the decision-support system.
 
@@ -531,50 +508,42 @@ The system will be developed incrementally.
 
 ### Stage 1
 
-```text
 Predict Exit
-```
 
 ### Stage 2
 
-```text
 Predict Exit Probability
-```
 
 ### Stage 3
 
-```text
+
 Assign Risk Category
-```
+
 
 Example:
 
-```text
+
 Low
 Moderate
 High
 Critical
-```
+
 
 Thresholds must be validated rather than assumed.
 
 ### Stage 4
 
-```text
+
 Prioritize Customers
-```
+
 
 ### Stage 5
 
-```text
 Recommend Intervention
-```
 
 ### Stage 6
 
-```text
 Prescriptive Optimization
-```
 
 No later stage should be developed before the previous stage has been validated.
 
@@ -582,7 +551,7 @@ No later stage should be developed before the previous stage has been validated.
 
 # 21. Recommended Decision-Support Architecture
 
-```text
+
                 CUSTOMER DATA
                      │
                      ▼
@@ -608,13 +577,13 @@ No later stage should be developed before the previous stage has been validated.
                      │
                      ▼
         RECOMMENDED INTERVENTION
-```
+
 
 ---
 
 # 22. Project Folder Structure
 
-```text
+
 bank-churn-decision-support/
 │
 ├── README.md
@@ -653,7 +622,7 @@ bank-churn-decision-support/
 │   └── results/
 │
 └── docs/
-```
+
 
 ---
 
@@ -663,9 +632,9 @@ All experiments must use controlled random seeds.
 
 Default:
 
-```python
+python
 RANDOM_STATE = 42
-```
+
 
 Dataset generation must be reproducible.
 
@@ -717,7 +686,7 @@ Before modeling, check:
 
 The project must never:
 
-* claim synthetic data is real
+* claim synthetic data as real
 * invent model results
 * invent sources
 * fabricate citations
@@ -735,20 +704,16 @@ If an experiment has not been performed, label it:
 # 27. Scalability Strategy
 
 The initial dataset contains:
-
-```text
 10,000 customers
-```
-
 Once the complete pipeline is validated:
 
-```text
+
 10K
  ↓
 50K
  ↓
-100K+
-```
+100K
+
 
 Scaling should require minimal code changes.
 
@@ -760,29 +725,27 @@ Dataset size must therefore be configuration-driven.
 
 Initial:
 
-```text
 6 months
-```
 
 Future experiment:
 
-```text
+
 12 months
-```
+
 
 The horizon should be controlled through configuration.
 
 Example:
 
-```python
+python
 PREDICTION_HORIZON_MONTHS = 6
-```
+
 
 Changing it to:
 
-```python
+python
 PREDICTION_HORIZON_MONTHS = 12
-```
+
 
 should not require rewriting the entire pipeline.
 
@@ -832,7 +795,7 @@ The project is considered complete only when it contains:
 
 The project follows:
 
-```text
+
 CORRECTNESS
     >
 DATA QUALITY
@@ -846,7 +809,7 @@ REPRODUCIBILITY
 PERFORMANCE
     >
 COMPLEXITY
-```
+
 
 Complexity should only be added when it provides measurable value.
 
@@ -877,23 +840,15 @@ The immediate milestone is:
 
 Only after this milestone is validated should model development begin.
 
-````
-
 ---
 
 ## 3. One architectural choice I strongly recommend
 
-There is one thing I'd change from a typical "churn dataset" project.
-
-**Don't make your final dataset just this:**
-
-```text
 Customer_ID | Age | Balance | Transactions | Complaints | ... | Churn
-````
 
 Instead, think of it as **three layers**:
 
-```text
+
                  ┌──────────────────────┐
                  │     RAW SIMULATION   │
                  │                      │
@@ -919,13 +874,13 @@ Instead, think of it as **three layers**:
                  │ X = past information │
                  │ y = future exit      │
                  └──────────────────────┘
-```
+
 
 This is **much stronger academically**.
 
-For example, your `balance_trend` shouldn't be an arbitrary number generated independently. It should emerge from something like:
+For example, your balance_trend shouldn't be an arbitrary number generated independently. It should emerge from something like:
 
-```text
+
 Month 1    ₹82,000
 Month 2    ₹79,500
 Month 3    ₹76,200
@@ -934,11 +889,11 @@ Month 5    ₹69,100
 Month 6    ₹63,400
                   ↓
        balance_trend = -22.7%
-```
+
 
 Likewise:
 
-```text
+
 Digital activity
 
 Month 1 → 31 sessions
@@ -951,7 +906,7 @@ Month 6 → 11
              ↓
 
 change_in_digital_activity = -64.5%
-```
+
 
 That gives your project a **real ETL + feature engineering story**, rather than "we generated 30 columns and trained Random Forest."
 
@@ -963,10 +918,10 @@ Because **we control the synthetic data**, we could accidentally make the proble
 
 For example, if we generate:
 
-```text
+
 High complaints → 90% churn
 Low complaints  → 5% churn
-```
+
 
 the model might achieve 97–99% accuracy.
 
@@ -976,7 +931,7 @@ That sounds impressive but actually makes the project **worse**, because a profe
 
 Instead, we want something more like:
 
-```text
+
                   Relationship Exit
                          ▲
                          │
@@ -988,7 +943,7 @@ Instead, we want something more like:
        └────────────┬────┴────┬────────────┘
                     │         │
                  Financial  Customer
-                  Position   Context
+                  Position   Con
                     │         │
                     └────┬────┘
                          │
@@ -996,7 +951,7 @@ Instead, we want something more like:
                          │
                          ▼
                   EXIT PROPENSITY
-```
+
 
 So some customers with **bad behavior won't leave**, and some customers with **apparently healthy behavior will leave**.
 
@@ -1007,13 +962,13 @@ That's what gives us a meaningful ML problem.
 ### Our development path is now locked
 ## Known limitations
 
-- **`branch_service_interaction_frequency` is constant (0) in the dataset.**
-  Verified: all 120,000 rows in `data/raw/monthly_engagement.csv` are 0, and
-  `ml_ready_dataset.csv` has 1 unique value for this column. The model therefore
+- **branch_service_interaction_frequency is constant (0) in the dataset.**
+  Verified: all 120,000 rows in data/raw/monthly_engagement.csv are 0, and
+  ml_ready_dataset.csv has 1 unique value for this column. The model therefore
   cannot learn from it, so it effectively uses 29 of 30 features.
-  Suspected cause: the formula in `generate_synthetic_dataset.py` (line 156) goes
+  Suspected cause: the formula in generate_synthetic_dataset.py (line 156) goes
   far below 0 and is clipped to 0. Not yet confirmed or fixed.
-- `service_interaction_frequency` is derived from this feature (line 162), so it
+- service_interaction_frequency is derived from this feature (line 162), so it
   is probably affected too.
 - The data quality report did not flag zero-variance columns.
 

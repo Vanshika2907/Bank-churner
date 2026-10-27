@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Any
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
-
 
 def train_baseline_models(
     X: pd.DataFrame,
@@ -25,7 +24,7 @@ def train_baseline_models(
         random_state=random_state,
     )
 
-    models: List[Tuple[str, object]] = [
+    models: List[Tuple[str, Any]] = [
         ("dummy", DummyClassifier(strategy="most_frequent")),
         ("logistic_regression", LogisticRegression(max_iter=2000, random_state=random_state)),
         ("decision_tree", DecisionTreeClassifier(random_state=random_state, max_depth=6)),
